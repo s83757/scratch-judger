@@ -6,14 +6,22 @@
   <title>Scratch Judger</title>
 </head>
 
+<input type="file" id="fileInput" accept=".sb3" />
+  <div id="stage-container"></div>
+  <div id="question-box" class="hidden">
+    <p id="question-text"></p>
+    <input type="text" id="answer-input">
+    <button id="submit-answer">Submit</button>
+  </div>
 
-<h1>Hello World!</h1>
+
+<!-- <h1>Hello World!</h1>
 <form method="post" enctype="multipart/form-data">
   <label for="file">File</label>
   <input id="file" name="file" type="file"/>
   <br/><br/>
   <button>Upload</button>
-</form>
+</form> -->
 
 <script src="https://unpkg.com/scratch-vm/dist/web/scratch-vm.js"></script>
 <script src="script.js"></script>

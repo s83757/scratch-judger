@@ -1,31 +1,34 @@
-const fileInput = document.getElementById("fileInput");
-const questionBox = document.getElementById("question-box");
-const questionText = document.getElementById("question-text");
-const answerInput = document.getElementById("answer-input");
-const submitAnswer = document.getElementById("submit-answer");
+// Create an instance of the Scratch VM
+const vm = new ScratchVM();
+const renderer = new ScratchRenderer(document.getElementById('output'));
 
-const vm = new window.VirtualMachine();
-
-fileInput.addEventListener("change", async (event) => {
-  const file = event.target.files[0];
-  const buffer = await file.arrayBuffer();
-
-  vm.attachRenderer(new window.HTMLRenderer(document.getElementById("stage-container")));
-  vm.loadProject(buffer).then(() => {
-    vm.greenFlag(); // starts the project
-  });
+// Load SB3 file when uploaded
+document.getElementById('file-upload').addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        loadSB3(file);
+    }
 });
 
-// Handle the ask-and-wait block
-vm.on("QUESTION", (text) => {
-  questionText.textContent = text;
-  answerInput.value = "";
-  questionBox.classList.remove("hidden");
-});
+// Function to load the SB3 file into the Scratch VM
+function loadSB3(file) {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const projectData = e.target.result;
+        await vm.loadProject(projectData);
+        vm.start();
+        renderer.start(vm);  // Start rendering the project
+        
+        // Listen for "say" block output
+        vm.runtime.on('say', (message) => {
+            document.getElementById('output').innerText = message;
+        });
 
-submitAnswer.addEventListener("click", () => {
-  const answer = answerInput.value;
-  vm.postIOData("answer", { text: answer });
-  vm.runtime.ioDevices.prompt._onPromptAnswer(answer);
-  questionBox.classList.add("hidden");
-});
+        // Listen for "ask" block response
+        vm.runtime.on('ask', async (question) => {
+            const userResponse = prompt(question);  // Get response from user
+            vm.runtime.emit('answer', userResponse);  // Send response back to VM
+        });
+    };
+    reader.readAsArrayBuffer(file);
+}

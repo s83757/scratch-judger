@@ -21,3 +21,21 @@ document.querySelector('form').addEventListener('submit', function (e) {
     };
     reader.readAsArrayBuffer(file);
 });
+
+vm.runtime.on('SAY', ({ target, type, message }) => {
+    if (type === 'say') {
+        console.log(`Sprite "${target.getName()}" says: ${message}`);
+        // You can also display this message in the DOM or handle it as needed
+    }
+});
+
+vm.runtime.on('QUESTION', (question) => {
+    // Display the question to the user
+    const userResponse = prompt(question);
+    
+    // Provide the user's answer back to the VM
+    vm.postIOData('userInput', {
+        id: 'answer',
+        value: userResponse
+    });
+});

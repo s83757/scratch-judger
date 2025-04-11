@@ -1,5 +1,13 @@
+
 const vm = new window.VirtualMachine();
 
+const storage = new window.Storage();
+vm.attachStorage(storage);
+
+
+vm.start();
+
+// file uploads
 document.querySelector('form').addEventListener('submit', function (e) {
     e.preventDefault();
     const fileInput = document.getElementById('file');
@@ -12,16 +20,22 @@ document.querySelector('form').addEventListener('submit', function (e) {
     const reader = new FileReader();
     reader.onload = function () {
         const arrayBuffer = reader.result;
-        vm.loadProject(arrayBuffer).then(() => {
-            vm.start();
-            vm.greenFlag();
-        }).catch(error => {
-            console.error('Error loading project:', error);
-        });
+        const loadPromise = vm.loadProject(arrayBuffer);
+        if (loadPromise && typeof loadPromise.then === 'function') {
+            loadPromise.then(() => {
+                console.log("Project Loaded");
+                vm.greenFlag();
+            }).catch(error => {
+                console.error('Error loading project:', error);
+            });
+        } else {
+            console.error('loadProject did not return a Promise. Ensure all dependencies are properly initialized.');
+        }
     };
     reader.readAsArrayBuffer(file);
 });
 
+// output
 vm.runtime.on('SAY', ({ target, type, message }) => {
     if (type === 'say') {
         console.log(`Sprite "${target.getName()}" says: ${message}`);
@@ -29,6 +43,7 @@ vm.runtime.on('SAY', ({ target, type, message }) => {
     }
 });
 
+// input
 vm.runtime.on('QUESTION', (question) => {
     // Display the question to the user
     const userResponse = prompt(question);

@@ -1,8 +1,8 @@
 
 const vm = new window.VirtualMachine();
 
-const storage = new window.Storage();
-vm.attachStorage(storage);
+// const storage = new window.Storage();
+// vm.attachStorage(storage);
 
 
 vm.start();

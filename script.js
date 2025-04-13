@@ -1,7 +1,7 @@
 
 const vm = new window.VirtualMachine();
 
-const storage = new window.ScratchStorage.default();
+const storage = new Scratch.Storage();
 vm.attachStorage(storage);
 
 

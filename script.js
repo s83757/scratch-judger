@@ -1,7 +1,7 @@
 
 const vm = new window.VirtualMachine();
 
-const storage = new window.ScratchStorage();
+const storage = new window.ScratchStorage().default();
 vm.attachStorage(storage);
 
 

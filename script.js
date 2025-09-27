@@ -1,3 +1,13 @@
+function isStrictInteger(str) {
+    return /^-?\d+$/.test(str);
+}
+
+function isIntegerString(str) {
+    const num = parseFloat(str);
+    return Number.isInteger(num) && !isNaN(num);
+}
+
+
 
 const vm = new window.VirtualMachine();
 
@@ -8,7 +18,42 @@ vm.attachStorage(storage);
 
 var enabled = false;
 
+function processSay(target, type, message) {
+    console.log("say block detected");
+    if (enabled == false) {
+        return;
+    }
+    if (target) {
+        const name = target.sprite && target.sprite.name ? target.sprite.name : 'Unknown';
+        // const message = target.sayBubble && target.sayBubble.text ? target.sayBubble.text : 'No message';
+        console.log(`Sprite "${name}" says: ${message}`);
+    } else {
+        console.warn('SAY event received with undefined target:', target, type, message);
+    }
+};
+function processQuestion(data) {
+    if (enabled == false) {
+        vm.runtime.emit("ANSWER", "");
+        return;
+    }
+    var q = "Insert input:";
+    if ( data === null) {
+        console.log("data is null, exited");
+        return;
+    } else if (typeof data === "string" && data === '') {
+        
+    } else {
+        q = data[0]; // question is 1st element of data array
+    }
+    console.log("QUESTION ee event fired. question: " + q);
+
+    var userResponse = prompt(q); // scratch-vm should format input field automatically
+    vm.runtime.emit("ANSWER", userResponse);
+};
+
+
 // vm.start();
+
 
 
 // file uploads
@@ -36,75 +81,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     vm.stopAll();
                     vm.start();
 
-                    // vm.runtime._monitors.forEach(m => {
-                    //     if (m.params.opcode === 'sensing_answer') {
-                    //         console.log("watcher silenced");
-                    //         m.visible = false;
-
-                    //     }
-                    //   });
-
-                    // output
-                    vm.runtime.on('SAY', (data) => {
-                        console.log("say block detected");
-                        if (enabled == false) {
-                            return;
-                        }
-                        console.log(data);
-                        const target = data;
-                        if (target) {
-                            const name = target.sprite && target.sprite.name ? target.sprite.name : 'Unknown';
-                            const message = target.sayBubble && target.sayBubble.text ? target.sayBubble.text : 'No message';
-                            console.log(`Sprite "${name}" says: ${message}`);
-                        } else {
-                            console.warn('SAY event received with undefined target:', data);
-                        }
-                    });
+                    vm.runtime.on('SAY', processSay);
                     
-                    // input
-                    vm.runtime.on('QUESTION', (data) => {
-                        if (enabled == false) {
-                            return;
-                        }
-                        console.log(data);
-                        if (data == null) {
-                            return;
-                        }
-                        const q = data.question;
-                        console.log("QUESTION event fired. question: " + q);
-                        
-                        console.log(typeof data);
-                        if (typeof q !== 'string' || q.trim() === '') {
-                            console.log("invalidated");
-                        }
-
-                        return;
-                        // Display the question to the user
-                        const userResponse = prompt(question);
-                    
-                        console.log("user responded");
-                        console.log(userResponse);
-                        
-                        // Provide the user's answer back to the VM
-                        vm.postIOData('userInput', {
-                            id: 'answer',
-                            value: userResponse
-                        });
-                    });
-
-
-
-
-
-
+                    vm.runtime.on('QUESTION', processQuestion);
 
                     console.log("starting...");
+                    
                     setTimeout(() => {
                         enabled = true;
                         console.log("Green Flag");
-                        vm.greenFlag();   // Delay just to ensure log appears first
+                        vm.greenFlag(); 
                         
-                    }, 200); // or 10-50ms if needed
+                    }, 200);
                 }).catch(error => {
                     console.error('Error loading project:', error);
                 });

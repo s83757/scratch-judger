@@ -6,16 +6,19 @@
     <title>Scratch Project Interaction</title>
 </head>
 <body>
-    <h1>Upload Scratch Project (SB3)</h1>
-    <input type="file" id="file-upload" accept=".sb3">
-    <div id="output"></div>
+    <h1>Hello World!</h1>
+    <form method="post" enctype="multipart/form-data">
+      <label for="file">File</label>
+      <input id="file" name="file" type="file"/>
+      <br/><br/>
+      <button>Upload</button>
+    </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/@scratch/scratch-vm@11.6.0/dist/web/scratch-vm.min.js"></script>
     
-    <script src="https://cdn.jsdelivr.net/npm/scratch-vm"></script>
-    <script src="https://cdn.jsdelivr.net/npm/scratch-svg-renderer"></script>
-    <script src="https://cdn.jsdelivr.net/npm/scratch-storage"></script>
-    <script src="https://cdn.jsdelivr.net/npm/scratch-blocks"></script>
-    <script src="https://cdn.jsdelivr.net/npm/scratch-render"></script>
-    
+
+    <script src="https://cdn.jsdelivr.net/npm/scratch-storage@latest/dist/web/scratch-storage.js"></script>
+
     <script src="script.js"></script>
 </body>
 </html>

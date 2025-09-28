@@ -74,10 +74,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const arrayBuffer = reader.result;
             console.log(arrayBuffer);
             const loadPromise = vm.loadProject(arrayBuffer);
+
+            vm.stopAll();
+            enabled = false;
+
+            vm.runtime.removeListener('SAY', processSay);
+            vm.runtime.removeListener('QUESTION', processQuestion);
+            console.log("Removed custom SAY and QUESTION listeners.");
+
             if (loadPromise && typeof loadPromise.then === 'function') {
                 loadPromise.then(() => {
                     console.log("Project Loaded");
                     console.log(JSON.stringify(vm.toJSON(), null, 2));
+                    vm.quit();
                     vm.stopAll();
                     vm.start();
 

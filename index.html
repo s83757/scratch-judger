@@ -7,18 +7,64 @@
 </head>
 <body>
     <h1>Hello World!</h1>
+    <br>
+    <br>
+    <br>
+    This is an online judge for scratch projects (.sb3 files). <br>
+    <br>
+    You can solve the following problems:
+    <ul>
+      <li>Sum: Given a positive integer N followed by N integers each on their own line, output their sum.</li>
+      <li><a href="https://usaco.org/index.php?page=viewproblem2&cpid=1302">Bakery</a> (Disclaimer: This website is not affiliated with USACO.)</li>
+    </ul>
+    Submission instructions
+    <ul>
+      <li>Please upload your solution as a .sb3 file.</li>
+      <li>For standard input, use the "ask _ and wait" block. This reads an entire line of input.</li>
+      <li>To write to standard output, use the "say _" block.</li>
+      <li> Note: To end your program, you must use a "say [program end]". Otherwise, you will receive a tle verdict.</li>
+    </ul>
+    <br>
+   
+    <br>
     <form method="post" enctype="multipart/form-data">
       <label for="file">File</label>
       <input id="file" name="file" type="file"/>
       <br/><br/>
+  
+      <label for="problem-select">Select Problem:</label>
+      <select name="problem" id="problem-select">
+        <option value="sum">Sum</option>
+        <option value="bakery">Bakery</option>
+      </select>
       <button>Upload</button>
     </form>
 
+    <div id="results-container">
+    <h2>Results</h2>
+    <table id="results-table" border="1" cellpadding="5">
+        <thead>
+            <tr>
+                <th>Test Case</th>
+                <th>Status</th>
+                <!-- <th>Time (ms)</th> -->
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+</div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/scratch-storage@latest/dist/web/scratch-storage.js"></script>
+  
+    <!-- <script src="https://cdn.jsdelivr.net/npm/scratch-vm@latest/dist/web/scratch-vm.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/@scratch/scratch-vm@11.6.0/dist/web/scratch-vm.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/scratch-storage@latest/dist/web/scratch-storage.js"></script>
 
-    <script src="script.js"></script>
+    <script src="script.js" type="module"></script>
+
 </body>
 </html>

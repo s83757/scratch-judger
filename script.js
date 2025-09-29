@@ -2,16 +2,25 @@ import { OptimizedQueue, SimpleStack } from "./dataStructures.js";
 
 const TIME_LIMIT = 2000;
 
-const vm = new window.VirtualMachine();
+// const vm = new window.VirtualMachine();
 
 // vm.convertToPackagedRuntime();
-vm.setTurboMode(true);
+// vm.setTurboMode(true);
 // vm.setFramerate(250);
 
 // const storage = new Scratch.Storage();
-const storage = new window.ScratchStorage.ScratchStorage();
+// const storage = new window.ScratchStorage.ScratchStorage();
 // const storage = new ScratchStorage();
-vm.attachStorage(storage);
+// vm.attachStorage(storage);
+
+// const vm = new window.VirtualMachine();
+// vm.setTurboMode(true);
+// const storage = new window.ScratchStorage.ScratchStorage();
+
+const TEST_DATA_PATH = {
+    "sum": "./test_data/sum/sum.zip",
+    "bakery": "./test_data/bakery/prob1_silver_feb23.zip"
+}
 
 var enabled = false;
 
@@ -65,13 +74,16 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please select a file.');
             return;
         }
-    
+        const dropDown = document.getElementById('problem-select');
+        const selectedValue = dropDown.value;
+        
         const reader = new FileReader();
         reader.onload = function () {
             const arrayBuffer = reader.result;
-            runTests(arrayBuffer, "./test_data/sum/sum.zip");
+            // console.log(TEST_DATA_PATH[selectedValue]);
+            runTests(arrayBuffer, TEST_DATA_PATH[selectedValue]);
         };
-        reader.readAsArrayBuffer(file);
+        reader.readAsArrayBuffer(file); // triggers reader.onload
     });
 
     
@@ -98,6 +110,7 @@ function runTests(submission, testData) {
 
 
 function testDataComp(a, b) {
+
     return a[0] > b[0];
 }
 
@@ -136,17 +149,29 @@ function processZipContents(zipArrayBuffer) {
         return Promise.all(fileExtractionPromises)
                 .then(() => {
                     console.log("All files extracted. Sorting data.");
-
-                    // 4. Sort the data only AFTER all promises are resolved
                     rawInputs.sort(testDataComp);
                     rawOutputs.sort(testDataComp);
                     
-                    // 5. Return the final object that resolves the main processZipContents Promise
                     return { inputs: rawInputs, outputs: rawOutputs };
                 });
     }).catch(e => {
         console.error("Error processing zip file:", e);
     });
+}
+
+
+
+function clearResultsTable() {
+    const RESULTS_TABLE = document.getElementById("results-table");
+    const tableBody = document.querySelector('#results-table tbody');
+    if (tableBody) {
+        while (tableBody.firstChild) {
+            tableBody.removeChild(tableBody.firstChild);
+        }
+        // console.log("Results table cleared.");
+    } else {
+        console.warn("Table body element (#results-table tbody) not found.");
+    }
 }
 
 async function evaluate(submission, inputs, outputs) {
@@ -156,37 +181,65 @@ async function evaluate(submission, inputs, outputs) {
     }
 
     const testResults = [];
+    const testPromises = [];
+    clearResultsTable();
+    for (let i = 0; i < inputs.length; i++) {
+        const tableBody = document.querySelector('#results-table tbody');
+        const newRow = tableBody.insertRow();
+        newRow.id = `test-row-${i+1}`; // Give the row a unique ID for easy lookup
+        newRow.className = 'status-loading'; // for css later
+        const caseCell = newRow.insertCell();
+        caseCell.textContent = i+1;
+        const statusCell = newRow.insertCell();
+        statusCell.textContent = "Loading...";
+    }
 
     for (let i = 0; i < inputs.length; i++) {
         console.log(`\n--- Running Test Case ${i + 1} ---`);
+
+        
+
+        const testPromise = runSingleTest(submission, inputs[i][1], outputs[i][1], TIME_LIMIT);
+
+        await new Promise(resolve => setTimeout(resolve, 0));
+
         const result = await runSingleTest(
             submission, // The loaded project file content
             inputs[i][1],
             outputs[i][1],
             TIME_LIMIT
         );
-        testResults.push({
-            testCase: i+1,
-            result: result
+
+        const handlerPromise = testPromise.then(resultObject => {
+            
+            testResults.push({
+                testCase: i+1,
+                result: result
+            });
+            
+            const row = document.getElementById(`test-row-${i+1}`);
+            row.cells[1].textContent = result;
+            row.className = 'status-finished';
+            
+            return;
+        }).catch(error => {
+            console.error(`Error in test ${i+1}:`, error);
+            // Handle fatal errors or re-reject if necessary
+            return;
         });
+
+        testPromises.push(handlerPromise);
     }
+    await new Promise(resolve => setTimeout(resolve, 0)); // to render all loading rows first
+
+    console.log(`\n--- Launching ${testPromises.length} tests concurrently ---`);
+    const testResults2 = await Promise.all(testPromises);
+
     console.log("\n--- All Tests Complete ---");
     console.table(testResults);
     return testResults;
 }
 
-// Assume vm and enabled are globally accessible, as in your setup.
-// If not, they should be passed as arguments.
-const TEST_TIMEOUT = 5000; // Example time limit (5 seconds)
-
-/**
- * Runs a single test case using the Virtual Machine.
- * @param {ArrayBuffer} submission - The Scratch project file content.
- * @param {string} inputData - The input string to feed the QUESTION block.
- * @param {string} expectedOutput - The expected output string.
- * @param {number} timeoutMs - Time limit for the test run.
- * @returns {Promise<string>} A Promise that resolves to one of the result strings.
- */
 function runSingleTest(submission, inputData, expectedOutput, timelimit) {
     
     var inputQueue = new OptimizedQueue();
@@ -196,34 +249,43 @@ function runSingleTest(submission, inputData, expectedOutput, timelimit) {
     var startTime;
     var elapsedTime;
 
+    const vm = new window.VirtualMachine();
+    vm.setTurboMode(true);
+    const storage = new window.ScratchStorage.ScratchStorage();
+
+
     return new Promise((resolve) => {
 
         const grade = () => {
             const normalizedActual = programOutput.trim();
             const normalizedExpected = expectedOutput.trim();
-            // var elapsedTime = Math.round(performance.now() - startTime); 
+            elapsedTime = Math.round(performance.now() - startTime); 
 
             if (normalizedActual === normalizedExpected) {
+                console.log(`Expected: "${normalizedExpected}", Actual: "${normalizedActual}"`);
                 resolve("correct, " + elapsedTime + "ms");
             } else {
                 console.log(`Expected: "${normalizedExpected}", Actual: "${normalizedActual}"`);
-                resolve("rejected (wrong answer or tle)");
+                resolve("wrong answer");
             }
         }
 
         const timer = setTimeout(() => {
             cleanup();
-            // resolve("time limit exceeded");
-            grade();
+            resolve("time limit exceeded");
         }, timelimit);
 
         let programOutput = "";
         const sayListener = (target, type, message) => {
-            programOutput += message;
-            if (message !== "") {
+            
+            if (message === "program end") {
+                cleanup();
+                grade();
+            } else if (message !== "") {
+                programOutput += message;
                 programOutput += "\n";
                 // console.log("received nonempty say");
-                elapsedTime = Math.round(performance.now() - startTime);
+                // elapsedTime = Math.round(performance.now() - startTime);
             }
             
             
@@ -239,15 +301,11 @@ function runSingleTest(submission, inputData, expectedOutput, timelimit) {
             vm.runtime.removeListener('RUNTIME_ERROR', runtimeErrorListener);
             
         }
-        
-        
 
-        // Listener to feed input and finalize the test
         const questionListener = (data) => {
             
             if (data !== null) {
                 // console.log("triggered");
-                // Immediately feed the input data
                 if (inputQueue.isEmpty()) {
                     console.warn("Project asked for more input than provided.");
                     cleanup();
@@ -263,7 +321,6 @@ function runSingleTest(submission, inputData, expectedOutput, timelimit) {
             
         };
         
-        // Listener to detect VM errors (e.g., stack overflow)
         const runtimeErrorListener = (error) => {
              // Clear the timeout and resolve with error status
             clearTimeout(timer);
@@ -294,7 +351,7 @@ function runSingleTest(submission, inputData, expectedOutput, timelimit) {
                 clearTimeout(timer);
                 console.error("Load Error:", error);
                 cleanup();
-                resolve("runtime error"); // Treat load error as a type of runtime failure
+                resolve("compilation error");
             });
     });
 }

@@ -20,7 +20,9 @@ const TIME_LIMIT = 2000;
 
 const TEST_DATA_PATH = {
     "sum": "./test_data/sum/sum.zip",
-    "bakery": "./test_data/bakery/prob1_silver_feb23.zip"
+    "farmerjohnscheeseblock": "./test_data/farmerjohnscheeseblock/prob2_bronze_dec24.zip",
+    "bakery": "./test_data/bakery/prob1_silver_feb23.zip",
+    "shortcut": "./test_data/shortcut/shortcut_gold_jan19.zip",
 }
 
 

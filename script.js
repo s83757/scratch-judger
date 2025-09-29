@@ -110,8 +110,13 @@ function runTests(submission, testData) {
 
 
 function testDataComp(a, b) {
-
-    return a[0] > b[0];
+    const extractNumber = (filename) => {
+        const match = filename.match(/^(\d+)/); 
+        return match ? parseInt(match[1], 10) : 0;
+    };
+    const numA = extractNumber(a[0]);
+    const numB = extractNumber(b[0]);
+    return numA - numB; 
 }
 
 function processFolderContents(folder) {
@@ -150,7 +155,9 @@ function processZipContents(zipArrayBuffer) {
                 .then(() => {
                     console.log("All files extracted. Sorting data.");
                     rawInputs.sort(testDataComp);
+                    // console.log(rawInputs);
                     rawOutputs.sort(testDataComp);
+                    // console.log(rawOutputs);
                     
                     return { inputs: rawInputs, outputs: rawOutputs };
                 });
@@ -262,10 +269,11 @@ function runSingleTest(submission, inputData, expectedOutput, timelimit) {
             elapsedTime = Math.round(performance.now() - startTime); 
 
             if (normalizedActual === normalizedExpected) {
-                console.log(`Expected: "${normalizedExpected}", Actual: "${normalizedActual}"`);
+                // console.log(`Input: "${inputData}", Expected: "${normalizedExpected}", Actual: "${normalizedActual}"`);
                 resolve("correct, " + elapsedTime + "ms");
             } else {
                 console.log(`Expected: "${normalizedExpected}", Actual: "${normalizedActual}"`);
+                // console.log(`Input: "${inputData}", Expected: "${normalizedExpected}", Actual: "${normalizedActual}"`);
                 resolve("wrong answer");
             }
         }

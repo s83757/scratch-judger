@@ -1,7 +1,7 @@
 
 import { OptimizedQueue, SimpleStack } from "./dataStructures.js";
 
-const TIME_LIMIT = 2000;
+const TIME_LIMIT = 30000;
 
 // const vm = new window.VirtualMachine();
 
@@ -210,10 +210,11 @@ async function evaluate(submission, inputs, outputs) {
         console.log(`\n--- Running Test Case ${i + 1} ---`);
 
         
+        // console.log(inputs[i][1]);
+        // console.log(outputs[i][1]);
+        // const testPromise = runSingleTest(submission, inputs[i][1], outputs[i][1], TIME_LIMIT);
 
-        const testPromise = runSingleTest(submission, inputs[i][1], outputs[i][1], TIME_LIMIT);
-
-        await new Promise(resolve => setTimeout(resolve, 0));
+        // await new Promise(resolve => setTimeout(resolve, 0));
 
         const result = await runSingleTest(
             submission, // The loaded project file content
@@ -222,30 +223,16 @@ async function evaluate(submission, inputs, outputs) {
             TIME_LIMIT
         );
 
-        const handlerPromise = testPromise.then(resultObject => {
-            
-            testResults.push({
-                testCase: i+1,
-                result: result
-            });
-            
-            const row = document.getElementById(`test-row-${i+1}`);
-            row.cells[1].textContent = result;
-            row.className = 'status-finished';
-            
-            return;
-        }).catch(error => {
-            console.error(`Error in test ${i+1}:`, error);
-            // Handle fatal errors or re-reject if necessary
-            return;
+        testResults.push({
+            testCase: i+1,
+            result: result
         });
-
-        testPromises.push(handlerPromise);
+        
+        const row = document.getElementById(`test-row-${i+1}`);
+        row.cells[1].textContent = result;
+        row.className = 'status-finished';
     }
-    await new Promise(resolve => setTimeout(resolve, 0)); // to render all loading rows first
-
-    console.log(`\n--- Launching ${testPromises.length} tests concurrently ---`);
-    const testResults2 = await Promise.all(testPromises);
+    // await new Promise(resolve => setTimeout(resolve, 0)); // to render all loading rows first
 
     console.log("\n--- All Tests Complete ---");
     console.table(testResults);
@@ -263,7 +250,8 @@ function runSingleTest(submission, inputData, expectedOutput, timelimit) {
 
     const vm = new window.VirtualMachine();
     vm.setTurboMode(true);
-    const storage = new window.ScratchStorage.ScratchStorage();
+    // vm.setFramerate(Infinity);
+    // const storage = new window.ScratchStorage.ScratchStorage();
 
 
     return new Promise((resolve) => {
@@ -297,7 +285,7 @@ function runSingleTest(submission, inputData, expectedOutput, timelimit) {
             } else if (message !== "") {
                 programOutput += message;
                 programOutput += "\n";
-                // console.log("received nonempty say");
+                // console.log("received nonempty say: " +  message);
                 // elapsedTime = Math.round(performance.now() - startTime);
             }
             

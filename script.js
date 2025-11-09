@@ -1,7 +1,8 @@
 
 import { OptimizedQueue, SimpleStack } from "./dataStructures.js";
 
-const TIME_LIMIT = 30000;
+const TIME_LIMIT = 10000;
+// require('scratch-vm');
 
 // const vm = new window.VirtualMachine();
 
@@ -249,8 +250,42 @@ function runSingleTest(submission, inputData, expectedOutput, timelimit) {
     var elapsedTime;
 
     const vm = new window.VirtualMachine();
+    // vm.convertToPackagedRuntime();
     vm.setTurboMode(true);
-    // vm.setFramerate(Infinity);
+    Object.defineProperty(vm.runtime.constructor, 'THREAD_STEP_INTERVAL', {
+        get: () => 1,   // new value
+        configurable: true
+    });
+    
+    // vm.runtime.start = function() {
+    //     if (this._steppingInterval) return;
+    //     const worker = new Worker('worker.js');
+
+    //     const self = this;
+    //     worker.onmessage = (event) => {
+    //         if (event.data.type === 'tick') {
+    //             console.log('tick');
+    //             self._step();
+    //         }
+    //     };
+    //     this._steppingInterval = worker;
+    //     this.emit(vm.runtime.constructor.RUNTIME_STARTED);
+    // };
+
+    // vm.runtime.quit = function() {
+    //     if (this._steppingInterval instanceof Worker) {
+    //         this._steppingInterval.terminate();
+    //     }
+    //     this._steppingInterval = null;
+    // };
+
+
+    // vm.renderer = null;
+    // vm.audioEngine = null;
+    
+    
+    vm.setCompatibilityMode(false);
+    
     // const storage = new window.ScratchStorage.ScratchStorage();
 
 
@@ -277,7 +312,7 @@ function runSingleTest(submission, inputData, expectedOutput, timelimit) {
         }, timelimit);
 
         let programOutput = "";
-        const sayListener = (target, type, message) => {
+        const sayListener = async (target, type, message) => {
             
             if (message === "program end") {
                 cleanup();
@@ -291,6 +326,12 @@ function runSingleTest(submission, inputData, expectedOutput, timelimit) {
             
             
         };
+
+        const stopListener = () => {
+            cleanup();
+            grade();
+        }
+
         const cleanup = () => {
 
             // Important: detach the event listeners here 
@@ -300,10 +341,11 @@ function runSingleTest(submission, inputData, expectedOutput, timelimit) {
             vm.runtime.removeListener('SAY', sayListener);
             vm.runtime.removeListener('QUESTION', questionListener);
             vm.runtime.removeListener('RUNTIME_ERROR', runtimeErrorListener);
+            vm.runtime.removeListener('PROJECT_RUN_STOP', stopListener);
             
         }
 
-        const questionListener = (data) => {
+        const questionListener = async (data) => {
             
             if (data !== null) {
                 // console.log("triggered");
@@ -338,15 +380,21 @@ function runSingleTest(submission, inputData, expectedOutput, timelimit) {
         // --- 4. Load and Run ---
         vm.runtime.on('SAY', sayListener);
         vm.runtime.on('QUESTION', questionListener);
+        vm.runtime.on('PROJECT_RUN_STOP', stopListener);
 
         vm.runtime.on('RUNTIME_ERROR', runtimeErrorListener); // Important for error catching
 
         vm.loadProject(submission)
-            .then(() => {
+            .then(async () => {
+                // vm.runtime.precompile();
                 vm.stopAll();
-                vm.start();
                 startTime = performance.now();
-                vm.greenFlag();
+                vm.runtime.start();
+                
+                vm.runtime.greenFlag(); // WARNING: 60Hz throttle
+                // while (vm.runtime.threads.length > 0) {
+                //     vm.runtime._step();
+                // }
             })
             .catch(error => {
                 clearTimeout(timer);
